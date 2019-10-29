@@ -1,0 +1,12 @@
+*.pyc
+.~txt
+*.db
+
+# diretorios
+logs/
+venv/
+slackbot/__pycache__
+.vscode/
+
+# files
+.env

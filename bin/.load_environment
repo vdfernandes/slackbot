@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export SLACKBOT_PYTHONPATH=$SLACKBOT_HOME/venv/bin
+cd "$(dirname "$0")"
+source ../.env

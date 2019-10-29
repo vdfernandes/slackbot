@@ -1,0 +1,4 @@
+#!/bin/bash
+source .load_environment
+cd ..
+${SLACKBOT_PYTHONPATH}/python -m slackbot.main "$@"
