@@ -13,18 +13,24 @@ DOMAIN = getenv('SLACK_DOMAIN')
 slack_cli = SlackClient(TOKEN)
 
 
-def chat_post_message(channel_id, message, attachments=None, thread_id=None,
-                      thread_reply_broadcast=False):
+def chat_post_message(
+        channel_id,
+        message,
+        attachments=None,
+        thread_id=None,
+        thread_reply_broadcast=False
+    ):
     logger = logging.getLogger(__name__)
-    logger.debug("realizando chamada chat.PostMessage")
+    logger.debug("Realizando chamada para a API: chat.PostMessage")
 
-    # post message args. Argumentos fixos
+    # Argumentos Fixos
     pm_args = dict(
         channel=channel_id,
         as_user=True,
         reply_broadcast=thread_reply_broadcast
     )
-    # parametros opcionais
+
+    # Argumentos Opcionais
     if message:
         pm_args['text'] = message
     if attachments:
@@ -37,6 +43,9 @@ def chat_post_message(channel_id, message, attachments=None, thread_id=None,
 
 
 def list_channels():
+    """
+    Relaciona canais disponíveis
+    """
     channels_call = slack_cli.api_call("channels.list")
     if channels_call.get('ok'):
         return channels_call['channels']
@@ -44,6 +53,9 @@ def list_channels():
 
 
 def list_private_channels():
+    """
+    Relaciona canais privados disponíveis
+    """
     channels_call = slack_cli.api_call("groups.list")
     if channels_call['ok']:
         return channels_call['groups']
@@ -51,6 +63,9 @@ def list_private_channels():
 
 
 def list_users():
+    """
+    Relaciona usuários disponíveis
+    """
     users_call = slack_cli.api_call("users.list")
     if users_call['ok']:
         return users_call['members']
@@ -58,21 +73,30 @@ def list_users():
 
 
 def user_info(user):
-    """ Return info about a user """
+    """
+    Relaciona dados de um usuário
+    """
     return slack_cli.api_call("users.info", user=user)
 
 
 def channel_info(channel):
-    """ Return info about a channel """
+    """
+    Relaciona dados de um canal
+    """
     return slack_cli.api_call("channels.info", channel=channel)
 
 
 def group_info(channel):
-    """ Return info about a private group """
+    """
+    Relaciona dados de um grupo de usuários
+    """
     return slack_cli.api_call("groups.info", channel=channel)
 
 
 def get_message(channel, ts):
+    """
+    Busca mensagens
+    """
     response = slack_cli.api_call(
         "channels.history",
         channel=channel,
@@ -87,6 +111,9 @@ def get_message(channel, ts):
 
 
 def message_permalink(channel, ts):
+    """
+    Busca link direto de mensagens
+    """
     permalink = "{}/archives/{}/p{}".format(
         DOMAIN,
         channel,
@@ -96,6 +123,9 @@ def message_permalink(channel, ts):
 
 
 def find_id(type, name):
+    """
+    Relaciona ID de um usuário ou canal
+    """
     if type == 'channel':
         x = list_channels()
         for channel in x:
@@ -122,22 +152,25 @@ def find_id(type, name):
 
 
 def for_humans_text(text):
+    """
+    Processador de mensagens para leitura
+    """
     # regex for users mentions
     re_atuser = re.compile(r'<@[A-Z0-9]*>')
 
     # regex for mentions in general (@channel, @here, @group)
     re_mention = re.compile(r'<![\w]*[\^]*[A-Z0-9]*\|@[\w-]*>')
+
     # regex for mention name (into a mention)
     re_human_mention = re.compile(r'@[\w-]*')
 
     # regex for mentions for channels (#channel_name)
     re_sharp_channel = re.compile(r'<#[A-Z0-9]*\|[a-zA-Z0-9_-]*>')
+
     # regex for mention name (into a mention)
     re_chhuman_mention = re.compile(r'\|[\w_-]*')
-
     dict_replace = dict()
 
-    # list(set([])) perform a distinct into values
     # add mentions to dict replace
     mentions = list(set(re_mention.findall(text)))
     for m in mentions:

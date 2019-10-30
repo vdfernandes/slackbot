@@ -19,43 +19,73 @@ class ConfigChannel(SlackCommand):
     def _handle_args(self, args):
         parser = CmdArgumentParser(
             description="Configura canal do Slack",
-            prog='config-channel', add_help=False)
+            prog='config-channel',
+            add_help=False
+        )
         parser.add_argument(
-            "--project", type=str, metavar="JIRA_PROJECT",
-            help="Projeto default para o canal")
+            "--project",
+            type=str,
+            metavar="JIRA_PROJECT",
+            help="Projeto default para o canal"
+        )
         parser.add_argument(
-            "--issue-type", type=str, metavar="ISSUE_TYPE",
-            help="Tipo de issue default do canal")
+            "--issue-type",
+            type=str,
+            metavar="ISSUE_TYPE",
+            help="Tipo de issue default do canal"
+        )
         parser.add_argument(
-            "--close-id", type=str, metavar="CLOSE_ID",
-            help="ID da transição para fechar a issue")
+            "--close-id",
+            type=str,
+            metavar="CLOSE_ID",
+            help="ID da transição para fechar a issue"
+        )
         parser.add_argument(
-            "--reopen-id", type=str, metavar="REOPEN_ID",
-            help="ID da transição para reabrir uma issue")
+            "--reopen-id",
+            type=str,
+            metavar="REOPEN_ID",
+            help="ID da transição para reabrir uma issue"
+        )
         parser.add_argument(
-            "--priority", type=str, metavar="JIRA_PRIORITY",
-            help="Prioridade default para o canal ao abrir issues")
+            "--priority",
+            type=str,
+            metavar="JIRA_PRIORITY",
+            help="Prioridade default para o canal ao abrir issues"
+        )
         parser.add_argument(
-            "--priorities", type=str, metavar="PRIORITIES", nargs='*',
-            help=("Lista de prioridades aceitas pelo canal. Formato "
-                  "SLACK_PRI:JIRA_PRI"))
+            "--priorities",
+            type=str,
+            metavar="PRIORITIES",
+            nargs='*',
+            help="Lista de prioridades aceitas pelo canal. Formato SLACK_PRI:JIRA_PRI"
+        )
         parser.add_argument(
-            "--map-issuetypes", type=str, metavar="MAP_ISSUETYPES", nargs='*',
-            help=("Lista 'de:para' de issue_types. Formato "
-                  "SLACK_ISSYETYPE:JIRA_ISSUETYPE"))
+            "--map-issuetypes", 
+            type=str,
+            metavar="MAP_ISSUETYPES",
+            nargs='*',
+            help="Lista 'de:para' de issue_types. Formato SLACK_ISSYETYPE:JIRA_ISSUETYPE"
+        )
         parser.add_argument(
-            "--list", action="store_true",
-            help="Lista as configurações atuais")
+            "--list",
+            action="store_true",
+            help="Lista as configurações atuais"
+        )
         parser.add_argument(
-            "--help", required=False, action="store_true",
-            help="Mostra esta mensagem.")
+            "--help",
+            required=False,
+            action="store_true",
+            help="Mostra esta mensagem."
+        )
         self.help_text = parser.format_help()
         self.usage = parser.format_usage()
         return parser.parse_args(args)
 
-    # metodo que executa a acao
     @handle_exceptions
     def run(self):
+        """
+        Execução de configuração inicial do canal
+        """
         self.args = self._handle_args(self.arguments)
 
         if self.args.help:
@@ -83,19 +113,19 @@ class ConfigChannel(SlackCommand):
         ch = Channel().find(channel=self.channel)
         full_text = [
             "```",
-            "channel id: {}".format(ch.channel),
-            "project: {}".format(ch.project),
-            "default issue type: {}".format(ch.issuetype),
-            "default priority: {}".format(ch.priority),
-            "close_id: {}".format(ch.id_tr_close)
+            "Channel ID: {}".format(ch.channel),
+            "Project: {}".format(ch.project),
+            "Default Issue Type: {}".format(ch.issuetype),
+            "Default Priority: {}".format(ch.priority),
+            "Close ID: {}".format(ch.id_tr_close)
         ]
 
-        full_text.append("\nissue_types (slack_issuetype : jira_issuetype)")
+        full_text.append("\nIssue Types (slack_issuetype : jira_issuetype)")
         full_text.append("----------------------------------------------")
         for sit, jit in ch.dict_issuetypes.items():
             full_text.append("    {} : {}".format(sit, jit))
 
-        full_text.append("\npriorities (slack_priority : jira_priority)")
+        full_text.append("\nPriorities (slack_priority : jira_priority)")
         full_text.append("-------------------------------------------")
         for sp, jp in ch.dict_priorities.items():
             full_text.append("    {} : {}".format(sp, jp))
@@ -107,14 +137,14 @@ class ConfigChannel(SlackCommand):
     def _config_channel(self):
         ch = Channel().find(channel=self.channel)
         if ch:
-            self.text = "`canal reconfigurado`"
+            self.text = "`Canal reconfigurado com sucesso.`"
             ch.project = self.args.project if self.args.project else ch.project
             ch.issuetype = self.args.issue_type if self.args.issue_type else ch.issuetype
             ch.priority = self.args.priority if self.args.priority else ch.priority
             ch.id_tr_close = self.args.close_id if self.args.close_id else ch.id_tr_close
             ch.id_tr_reopen = self.args.reopen_id if self.args.reopen_id else ch.id_tr_reopen
         else:
-            self.text = "`canal configurado`"
+            self.text = "`Canal configurado com sucesso.`"
             ch = Channel(
                 channel=self.channel,
                 project=self.args.project,
@@ -132,11 +162,11 @@ class ConfigChannel(SlackCommand):
         ch_priorities = ChannelPriority().find(channel=self.channel)
 
         if ch_priorities:
-            self.text = "`prioridades reconfiguradas`"
+            self.text = "`Prioridades reconfiguradas com sucesso.`"
             ch_priorities.delete()
             self.session.commit()
         else:
-            self.text = "`prioridades configuradas`"
+            self.text = "`Prioridades configuradas com sucesso.`"
 
         for item in self.args.priorities:
             s_pri, j_pri = item.split(':')
@@ -155,11 +185,11 @@ class ConfigChannel(SlackCommand):
         ch_issuetypes = ChannelIssueType().find(channel=self.channel)
 
         if ch_issuetypes:
-            self.text = "`issue_types reconfigurados`"
+            self.text = "`Issue Types reconfigurados com sucesso.`"
             ch_issuetypes.delete()
             self.session.commit()
         else:
-            self.text = "`issue_types configurados`"
+            self.text = "`Issue Types configurados com sucesso.`"
 
         for item in self.args.map_issuetypes:
             s_itype, j_itype = item.split(':')

@@ -33,94 +33,108 @@ class Open(SlackCommand):
     def _handle_args(self, args):
         parser = CmdArgumentParser(
             description="Abre um card no JIRA e associa a uma thread do Slack",
-            prog='open-card', add_help=False)
+            prog='open-card',
+            add_help=False
+        )
         parser.add_argument(
-            "issue_type", type=str, metavar="ISSUE_TYPE", nargs="?",
-            help="Tipo de issue para abertura do card")
+            "issue_type",
+            type=str,
+            metavar="ISSUE_TYPE",
+            nargs="?",
+            help="Tipo de issue para abertura do card"
+        )
         parser.add_argument(
-            "-p", "--priority", type=str,
-            help="Prioridade do card.")
-        parser.add_argument("--help", required=False, action="store_true",
-                            help="Mostra esta mensagem.")
-        # self.help_text = parser.format_help()
+            "-p",
+            "--priority",
+            type=str,
+            help="Prioridade do card."
+        )
+        parser.add_argument(
+            "--help",
+            required=False,
+            action="store_true",
+            help="Mostra esta mensagem."
+        )
         self.usage = parser.format_usage()
         return parser.parse_args(args)
 
-    # metodo que executa a acao
     @handle_exceptions
     def run(self):
-        # verifica se eh uma mensagem normal, ou dentro da thread
+        """
+        Método de abertura de cards no JIRA via Slack
+        """
+        # Verifica se eh uma mensagem normal, ou dentro da thread
         args = self._handle_args(self.arguments)
 
         if args.help:
             self._help()
             return
 
-        # captura se operador e solicitante quando a mensagem vem de um echo
-        if self.mthread_ts:
-            ts = self.mthread_ts
-            issue_text = self.mthread_text
-
-            if self.mthread_from == self.bot_id and \
-               self.mthread_text.startswith('_echo'):
-                requester = self._requester_from_echo()
-            else:
-                requester = user_info(self.mthread_from).get('user')
-        else:
-            ts = self.msg_ts
-            issue_text = self.cmd_text
-            requester = user_info(self.msg_from).get('user')
-
+        # Captura de Dados
+        ts = self.msg_ts
+        issue_text = self.cmd_text
+        requester = user_info(self.msg_from).get('user')
         operator = user_info(self.msg_from).get('user')
-
         channel_conf = Channel().find(channel=self.channel)
+
+        # Validação de configuração
         if not channel_conf:
             self.text = "Canal não configurado!"
             self.send()
             raise PlannedException("canal não configurado")
 
-        # define com qual issue type o card será aberto
+        # Define com qual issue type o card será aberto
         if args.issue_type:
             if args.issue_type in channel_conf.issue_types:
                 issue_type = channel_conf.dict_issuetypes.get(args.issue_type)
             else:
-                self.text = "`ISSUE_TYPE` incorreto, Esperado um dos valores: " \
-                            "`{}`".format(channel_conf.issue_types)
+                self.text = " ".join([
+                    "`ISSUE_TYPE` incorreto, esperado um dos valores: ",
+                    "`{}`".format(channel_conf.issue_types)
+                ])
                 self.send()
-                raise PlannedException("issue_type incorreto")
+                raise PlannedException("Tipo de card incorreto.")
         elif channel_conf.issuetype:
             issue_type = channel_conf.issuetype
         else:
-            self.text = "Não existe issue type configurado, favor informar" \
-                        "```{}```".format(self.usage)
+            self.text = " ".join([
+                "Não existe issue type configurado, favor informar",
+                "```{}```".format(self.usage)
+            ])
             self.send()
-            raise PlannedException("issue_type não informada/configurada")
+            raise PlannedException("Tipo de card não informado/configurado.")
 
         if args.priority:
             if args.priority in channel_conf.priorities:
                 priority = channel_conf.dict_priorities.get(args.priority)
             else:
-                self.text = "`PRIORITY` incorreto, Esperado um dos valores: " \
-                            "`{}`".format(channel_conf.priorities)
+                self.text = " ".join([
+                    "`PRIORITY` incorreto, Esperado um dos valores:",
+                    "`{}`".format(channel_conf.priorities)
+                ])
                 self.send()
-                raise PlannedException("priority incorreto")
+                raise PlannedException("Prioridade incorreta.")
         elif channel_conf.priority:
             priority = channel_conf.priority
         else:
-            self.text = "Não existe priority configurado, favor informar" \
-                        "```{}```".format(self.usage)
+            self.text = " ".join([
+                "Não existe priority configurado, favor informar",
+                "```{}```".format(self.usage)
+            ])
             self.send()
-            raise PlannedException("priority não informada/configurada")
+            raise PlannedException("Prioridade não informada/configurada.")
 
-        # verifica se já foi aberto um card para esta thread
+        # Verifica se já foi aberto um card para esta thread
         card = self.session.query(Card).filter_by(slack_ts=ts).first()
         if card:
-            self.logger.debug("card ja existente")
-            self.text = "Já existe um card para esta thread:\n" \
-                        "Card `{}`.".format(card.jira_issue)
+            self.logger.debug("Card existente.")
+            self.text = "\n".join([
+                "Já existe um card para esta thread:", 
+                "Card `{}`.".format(card.jira_issue)
+            ])
             self.send()
         else:
-            self.logger.debug("criando novo card")
+            self.logger.debug("Criando novo card.")
             self._open_card(
                 ts=ts,
                 text=for_humans_text(issue_text),
@@ -132,7 +146,9 @@ class Open(SlackCommand):
             )
 
     def _requester_from_echo(self):
-        """ Retorna usuário em caso de mensão """
+        """ 
+        Retorna usuário em caso de menção
+        """
 
         re_atuser = re.compile(r'<@[A-Z0-9]*>')
         echo_line = self.mthread_text.split('\n')[0]
@@ -141,8 +157,7 @@ class Open(SlackCommand):
         self.logger.debug("\n\n{}".format(echo_line))
         return user_info(mentioned_user[2:-1]).get('user')
 
-    def _open_card(
-            self, ts, text, requester, operator, project, issue_type, priority):
+    def _open_card(self, ts, text, requester, operator, project, issue_type, priority):
         if self.channel.startswith('C'):
             ch_info = channel_info(self.channel)
             channel = ch_info.get('channel').get('name')
@@ -156,11 +171,10 @@ class Open(SlackCommand):
         req_name = requester.get('profile').get('real_name_normalized')
         req_mail = requester.get('profile').get('email')
         req_id = requester.get('id')
-
         oper_mail = operator.get('profile').get('email')
-
         permalink = message_permalink(channel=self.channel, ts=self.thread_ts)
 
+        # Montagem de mensagem legível
         issue_fulltext = [
             "*Solicitante:* {}".format(req_name),
             "*E-mail:* {}".format(req_mail),
@@ -168,7 +182,7 @@ class Open(SlackCommand):
             "*Solicitação:* \r{}".format(text)
         ]
 
-        summary = "Solicitação slack. Channel #{}".format(channel)
+        summary = "Solicitado via Slack: Channel #{}".format(channel)
         issue = open_issue(
             project=project,
             summary=summary,
@@ -176,17 +190,17 @@ class Open(SlackCommand):
             issue_type=issue_type,
             priority=priority)
 
-        # adiciona o operador como responsavel
+        # Adiciona o operador como responsavel
         try:
             assign_issue(issue_id=issue.key, user_email=oper_mail)
         except Exception as e:
-            self.logger.error("Erro no assign: {}".format(e))
+            self.logger.error("Erro em adição de responsável: {}".format(e))
 
-        # adicionar o solicitante como watcher
+        # Adiciona o solicitante como watcher
         try:
             add_watcher(issue_id=issue.key, user_email=req_mail)
         except Exception as e:
-            self.logger.error("Erro no add_watcher: {}".format(e))
+            self.logger.error("Erro na adição de visualizador: {}".format(e))
 
         card = Card(
             slack_ts=ts,

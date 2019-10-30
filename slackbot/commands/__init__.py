@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import random
-
 from slackbot.slack.slackcommand import SlackCommand
 
 
 class Help(SlackCommand):
-    """ Answer a message with bot help """
+    """
+    Responde com uma mensagem de ajuda
+    """
     def run(self):
         msg = "\n".join([
             "-- Pendente implementação --"
@@ -15,9 +15,11 @@ class Help(SlackCommand):
 
 
 class NotFound(SlackCommand):
-    """ Answer a message with bot help """
+    """
+    Responde com uma mensagem de erro amigável para comando não encontrado
+    """
     def run(self):
         msg = "\n".join([
-            "Comando não reconhecido"
+            "Ops! Esse comando não foi reconhecido."
         ])
         self.send(text=msg)

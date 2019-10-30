@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from ..jira import client
-from ..jira.exception import (
+from slackbot.jira import client
+from slackbot.jira.exception import (
     CreateIssueError,
     JIRAError,
     JIRAUserNotFound,
@@ -10,6 +10,9 @@ from ..jira.exception import (
 
 
 def open_issue(project, summary, text, issue_type, priority=None):
+    """
+    Abre um card no JIRA
+    """
     try:
         issue_dict = dict(
             project=project,
@@ -29,6 +32,9 @@ def open_issue(project, summary, text, issue_type, priority=None):
 
 
 def get_issue(id_issue, fields=None):
+    """
+    Busca um card no JIRA
+    """
     if not fields:
         fields = 'creator', \
                  'description', \
@@ -46,22 +52,34 @@ def get_issue(id_issue, fields=None):
 
 
 def comment_issue(issue_id, comment):
+    """
+    Comenta um card no JIRA
+    """
     issue = get_issue(issue_id, fields='status')
     client.add_comment(issue=issue, body=comment)
 
 
 def transict_issue(issue_id, transition, comment):
+    """
+    Transiciona um card no JIRA
+    """
     issue = get_issue(issue_id, fields='status')
     client.transition_issue(
         issue=issue, transition=transition, comment=comment)
 
 
 def get_transictions(issue_id):
+    """
+    Busca uma lista de transições disponíveis para um card no JIRA
+    """
     issue = get_issue(issue_id, fields='status')
     return client.transitions(issue)
 
 
 def assign_issue(issue_id, user_email):
+    """
+    Atribui um responsável a um card no JIRA
+    """
     try:
         issue = get_issue(issue_id, fields='status')
         user = get_user(user_email)
@@ -73,6 +91,9 @@ def assign_issue(issue_id, user_email):
 
 
 def add_watcher(issue_id, user_email):
+    """
+    Atribui um visualizador a um card no JIRA
+    """
     try:
         issue = get_issue(issue_id, fields='status')
         user = get_user(user_email)
@@ -84,5 +105,7 @@ def add_watcher(issue_id, user_email):
 
 
 def get_user(user_email):
-    """ Get the first occurrence of a user with especified email """
+    """
+    Busca os dados de um usuário no JIRA
+    """
     return client.search_users(user=user_email, maxResults=1)[0]

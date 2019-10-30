@@ -7,31 +7,36 @@ import threading
 import logging
 import argparse
 
+from slackbot.utils import getenv
+from slackbot.daemon import Daemon
+from slackbot.slack.rtmslackbot import RTMSlackBot
+from slackbot.slack.exception import RTMConnectionLost
+
+# Importer dos comandos de processamento
 from slackbot.commands import (
     open as open_card,
     close as close_card,
     comment as comment_card, 
     configchannel,
     echo,
+    up,
     NotFound
 )
-from slackbot.utils import getenv
-from slackbot.daemon import Daemon
-from slackbot.slack.rtmslackbot import RTMSlackBot
-from slackbot.slack.exception import RTMConnectionLost
 
+# Logging
 READ_DELAY = getenv('DEFAULT_READ_DELAY')
 RETRY_DELAY = getenv('DEFAULT_RETRY_DELAY')
 LOGLEVEL = getenv('DEFAULT_LOGLEVEL')
 
+# Comandos aceitos
 d_commands = {
     'open': open_card.Open,
     'close': close_card.Close,
     'comment': comment_card.Comment,
     'config-channel': configchannel.ConfigChannel,
-    'echo': echo.Echo
+    'echo': echo.Echo,
+    'up': up.UP
 }
-
 
 class BotDeamon(Daemon):
     """ 
@@ -44,12 +49,18 @@ class BotDeamon(Daemon):
                         stderr=stderr, logger=logger)
 
     def _handle_commands(self, cmd):
+        """
+        Processamento dos comandos enviados
+        """
         self.logger.debug("command: {}".format(cmd.command))
         cmd.__class__ = d_commands.get(cmd.command.lower(), NotFound)
         threading.Thread(target=cmd.run).start()
         self.logger.debug("thread initiated")
 
     def run(self):
+        """
+        Execução dos processos do Bot
+        """
         def connect():
             try:
                 sb.connect(retry=10)
@@ -59,7 +70,6 @@ class BotDeamon(Daemon):
                 time.sleep(int(RETRY_DELAY))
                 connect()
 
-        # sb = RTMSlackBot(channel=None, logger=self.logger)
         sb = RTMSlackBot(channel=None)
         self.logger.info("Connecting to Slack RTM API...")
         connect()
@@ -84,7 +94,9 @@ class BotDeamon(Daemon):
 
 
 def start_logging(level):
-    # global logger
+    """
+    Logging
+    """
     logging.addLevelName(5, 'DEEPDEBUG')
     try:
         lvl = getattr(logging, level)
@@ -112,14 +124,20 @@ def start_logging(level):
 
 
 def load_args(sysargs):
-    """ Chatbot de interacao com Slack """
+    """
+    Parser dos argumentos do Bot
+    """
 
     parser = argparse.ArgumentParser(
-        prog='bomberman',
-        description="Chatbot de interacao Slack --> JIRA")
+        prog='',
+        description="Chatbot de interacao com Slack"
+    )
     parser.add_argument(
-        "option", type=str, choices=('start', 'stop', 'restart'),
-        help="Option of slackbot service")
+        "option",
+        type=str,
+        choices=('start', 'stop', 'restart'),
+        help="Option of slackbot service"
+    )
 
     return parser.parse_args(sysargs)
 
@@ -127,7 +145,7 @@ def load_args(sysargs):
 def main(sysargs):
     args = load_args(sysargs)
     logger = start_logging(LOGLEVEL)
-    logger.debug("slackbot called with sysargs {}".format(args))
+    logger.debug("Slackbot called with sysargs: {}".format(args))
 
     if LOGLEVEL in ('DEBUG', 'DEEPDEBUG'):
         outfile = '/tmp/slackbot.out'

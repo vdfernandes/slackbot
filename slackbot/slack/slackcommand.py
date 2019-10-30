@@ -3,6 +3,7 @@
 import argparse
 from ..slack.slackbot import SlackBot
 from ..slack.exception import CommandNotImplemented, PlannedException
+from slackbot.slack.methods import for_humans_text, get_message
 from ..jira.exception import (
     JIRAError,
     CreateIssueError,
@@ -12,8 +13,9 @@ from ..jira.exception import (
 
 
 class SlackCommand(SlackBot):
-    """ Classe de comandos Slack """
-
+    """
+    Classe de comandos Slack
+    """
     def __init__(self, logger=None, **kwargs):
         SlackBot.__init__(self, channel=kwargs.get('channel'), logger=logger)
 
@@ -36,11 +38,28 @@ class SlackCommand(SlackBot):
         else:
             self.thread_ts = kwargs.get('ts')
 
+    def _get_pointed_up_message(self):
+        """
+        Busca a mensagem acima à mensagem de solicitação do bot.
+        """
+        replies = get_message(self.channel, self.thread_ts).get('replies')
+        quantity = len(replies)
+        '''
+        for x in range(quantity):
+            pointed = replies[x].get('ts')
+            message = get_message(channel=self.channel, ts=pointed) 
+            self.text = message.get('text')
+            self.send()
+        '''            
+        pos = len(replies) - 2
+        ts_pointed = replies[pos].get('ts')
+        return get_message(channel=self.channel, ts=ts_pointed)      
+
     def __str__(self):
-        s = "channel: {} ts: {} from: {} command: {}".format(
+        s = "Channel: {}, TS: {}, From: {}, Command: {}".format(
             self.msg_channel, self.msg_ts, self.msg_from, self.command)
         if self.mthread_ts:
-            s = "{} thread_ts: {} thread_from: {}".format(
+            s = "{}, TS: {}, Thread From: {}".format(
                 s, self.mthread_ts, self.mthread_from)
         return s
 
@@ -49,7 +68,8 @@ class SlackCommand(SlackBot):
 
     def run(self):
         raise CommandNotImplemented(
-                "run needs to be implemented by {}".format(self))
+            "run needs to be implemented by {}".format(self)
+        )
 
 
 class ArgumentParserError(Exception):
@@ -67,10 +87,16 @@ def handle_exceptions(f):
         try:
             return f(*args, **kw)
         except ArgumentParserError:
-            self.logger.info("parametros não reconhecidos. cmd: {} arguments:"
-                             " {}".format(self.command, self.arguments))
-            msg = "Parametros não reconhecidos para o comando `{}`\n" \
-                  "```{}```".format(self.command, self.usage)
+            self.logger.info(
+                "Parâmetros não reconhecidos. Comando: {}, Argumentos: {}".format(
+                    self.command,
+                    self.arguments
+                )
+            )
+            msg = "Parâmetros não reconhecidos para o comando `{}`\n```{}```".format(
+                self.command,
+                self.usage
+            )
             self.send(text=msg)
         except PlannedException as err:
             self.logger.error("Error in {} run(). Error: {}".format(
@@ -81,13 +107,29 @@ def handle_exceptions(f):
             JIRAUserNotFound,
             AssignError
         ) as err:
-            self.logger.error("Error in {} run(). Error: {}".format(
-                self.__class__, err))
-            self.send(text="Ops, alguma coisa errada não está certa!  :bombdumb:\n"
-                           "`Erro na requisição à api do JIRA`")
+            self.logger.error(
+                "Error in {} run(). Error: {}".format(
+                    self.__class__,
+                    err
+                )
+            )
+            self.send(
+                text="\n".join([
+                    "Ops, alguma coisa errada não está certa! :bomb:",
+                    "`Erro na requisição à api do JIRA`"
+                ])
+            )
         except Exception as err:
-            self.logger.error("Error in {} run(). Error: {}".format(
-                self.__class__, err))
-            self.send(text="Ops, alguma coisa errada não está certa!  :bombdumb:\n"
-                           "`Impossivel processar o comando`")
+            self.logger.error(
+                "Error in {} run(). Error: {}".format(
+                    self.__class__,
+                    err
+                )
+            )
+            self.send(
+                text="\n".join([
+                    "Ops, alguma coisa errada não está certa! :bomb:",
+                    "`Impossivel processar o comando`"
+                ])
+            )
     return wrapper

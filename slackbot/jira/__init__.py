@@ -1,12 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from jira import JIRA
-from ..utils import getenv
+from slackbot.utils import getenv
 
-# load credentials
+# JIRA Credentials
 user = getenv('JIRA_USER')
 passwd = getenv('JIRA_PASSWORD')
 server = getenv('JIRA_SERVER')
 
-# instantiate jira client
-client = JIRA(server=server, basic_auth=(user, passwd))
+# JIRA Client
+client = JIRA(
+    server=server,
+    basic_auth=(
+        user,
+        passwd
+    )
+)
