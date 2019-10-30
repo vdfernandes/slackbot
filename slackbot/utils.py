@@ -23,12 +23,12 @@ def load_yaml(filename):
             logger.error("Error to load file {0}: {1}".format(file_path, e))
             raise
 
-def getenv(name):
+def getenv(name, default=''):
     """
     Retorna as variáveis de ambiente com base no nome
     """
     try:
         return os.environ[name]
     except Exception as e:
-        return '' 
+        return default
 

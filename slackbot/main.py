@@ -152,25 +152,25 @@ def main(sysargs):
     else:
         outfile = '/dev/null'
 
-    bmanbot = BotDeamon(
+    slackbot = BotDeamon(
         pidfile='/tmp/slackbot.pid',
         stdout=outfile,
         stderr=outfile)
-    logger.debug("class {} instantiated".format(bmanbot.__class__))
+    logger.debug("class {} instantiated".format(slackbot.__class__))
 
     if args.option == 'start':
         if getenv('SLACKBOT_DAEMON') == 'true':
             logger.info("Starting slackbot as deamon...")
-            bmanbot.start()
+            slackbot.start()
         else:
             logger.info("Starting slackbot...")
-            bmanbot.run()
+            slackbot.run()
     elif args.option == 'stop':
         logger.info("Stoping slackbot...")
-        bmanbot.stop()
+        slackbot.stop()
     elif args.option == 'restart':
         logger.info("Re-starting slackbot...")
-        bmanbot.restart()
+        slackbot.restart()
 
 
 if __name__ == '__main__':

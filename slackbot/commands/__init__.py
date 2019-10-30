@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from slackbot.slack.slackcommand import SlackCommand
+from slackbot.utils import getenv
 
 
 class Help(SlackCommand):
@@ -20,6 +21,8 @@ class NotFound(SlackCommand):
     """
     def run(self):
         msg = "\n".join([
-            "Ops! Esse comando não foi reconhecido."
+            "Ops! Esse comando não foi reconhecido. :{}:".format(
+                getenv('REACTION_SAD', 'disappointed')
+            )
         ])
         self.send(text=msg)

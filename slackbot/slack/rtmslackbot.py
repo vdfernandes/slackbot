@@ -92,11 +92,9 @@ class RTMSlackBot(SlackBot):
 
         def handle_message(msg):
             text = msg.get('text')
-            try:
-                # Linha de comando
-                cmdline = text.split(at_bot)[1].strip().split('\n')[0]
-                # Linhas abaixo do comando
-                cmd_text = "\n".join(text.split(at_bot)[1].split('\n')[1:])
+            try:                
+                cmdline = text.split(at_bot)[1].strip().split('\n')[0] # Comando                
+                cmd_text = "\n".join(text.split(at_bot)[1].split('\n')[1:]) # Abaixo do comando
             except IndexError:
                 cmdline = text.split('\n')[0].strip()
                 cmd_text = "\n".join(text.split('\n')[0].split('\n')[1:])

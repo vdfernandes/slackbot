@@ -14,8 +14,17 @@ class Daemon(object):
     Usage: subclass the Daemon class and override the run() method
     """
 
-    def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null',
-                 stderr='/dev/null', logger=None):
+    def __init__(
+        self, 
+        pidfile,
+        stdin='/dev/null',
+        stdout='/dev/null',
+        stderr='/dev/null',
+        logger=None
+    ):
+        """
+        Inicializador de Deamon
+        """
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
@@ -28,36 +37,32 @@ class Daemon(object):
         Programming in the UNIX Environment" for details (ISBN 0201563177)
         http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         """
-        self.logger.debug("begining deamonize")
+        self.logger.debug("Begining deamonize.")
         try:
             pid = os.fork()
             if pid > 0:
-                # exit first parent
                 sys.exit(0)
         except OSError as e:
-            # sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
-            self.logger.error("fork #1 failed: {} ({})\n".format(e.errno, e.strerror))
-            sys.stderr.write("fork #1 failed: {} ({})\n".format(e.errno, e.strerror))
+            self.logger.error("Fork #1 failed: {} ({})\n".format(e.errno, e.strerror))
+            sys.stderr.write("Fork #1 failed: {} ({})\n".format(e.errno, e.strerror))
             sys.exit(1)
 
-        # decouple from parent environment
+        # Decouple from parent environment
         os.chdir("/")
         os.setsid()
         os.umask(0)
 
-        # do second fork
+        # Do second fork
         try:
             pid = os.fork()
             if pid > 0:
-                # exit from second parent
                 sys.exit(0)
         except OSError as e:
-            # sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
-            self.logger.error("fork #2 failed: {} ({})\n".format(e.errno, e.strerror))
-            sys.stderr.write("fork #2 failed: {} ({})\n".format(e.errno, e.strerror))
+            self.logger.error("Fork #2 failed: {} ({})\n".format(e.errno, e.strerror))
+            sys.stderr.write("Fork #2 failed: {} ({})\n".format(e.errno, e.strerror))
             sys.exit(1)
 
-        # redirect standard file descriptors
+        # Redirect standard file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
         si = open(self.stdin, 'r')
@@ -67,7 +72,7 @@ class Daemon(object):
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
 
-        # write pidfile
+        # Write Pidfile
         atexit.register(self.delpid)
         pid = str(os.getpid())
         open(self.pidfile, 'w+').write("%s\n" % pid)
@@ -80,7 +85,7 @@ class Daemon(object):
         Start the daemon
         """
         # Check for a pidfile to see if the daemon already runs
-        self.logger.debug("starting daemon")
+        self.logger.debug("Starting daemon.")
         try:
             pf = open(self.pidfile, 'r')
             pid = int(pf.read().strip())
@@ -90,7 +95,7 @@ class Daemon(object):
             pid = None
 
         if pid:
-            message = "pidfile {} already exist. Daemon already running?".format(self.pidfile)
+            message = "Pidfile {} already exist. Daemon already running?".format(self.pidfile)
             self.logger.debug(message)
             sys.stderr.write("{}\n".format(message))
             sys.exit(1)
@@ -103,7 +108,7 @@ class Daemon(object):
         """
         Stop the daemon
         """
-        # Get the pid from the pidfile
+        # Get the pid from the Pidfile
         try:
             pf = open(self.pidfile, 'r')
             pid = int(pf.read().strip())
@@ -112,9 +117,10 @@ class Daemon(object):
             pid = None
 
         if not pid:
-            message = "pidfile %s does not exist. Daemon not running?\n"
-            sys.stderr.write(message % self.pidfile)
-            return  # not an error in a restart
+            message = "Pidfile {} does not exist. Daemon not running?".format(self.pidfile)
+            self.logger.debug(message)
+            sys.stderr.write("{}\n".format(message))
+            return  # Not an error in a restart
 
         # Try killing the daemon process
         try:
