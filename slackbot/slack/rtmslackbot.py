@@ -116,7 +116,7 @@ class RTMSlackBot(SlackBot):
             )
             self.logger.debug("Message: {}".format(message))
 
-            # se, mensagem e em uma thread, busca informcoes da thread
+            # Se a mensagem é em uma thread, busca informações da thread
             if msg.get('thread_ts'):
                 thread_ts = msg.get('thread_ts')
                 ch = msg.get('channel')
@@ -133,22 +133,18 @@ class RTMSlackBot(SlackBot):
         while True:
             try:
                 data = datalist.pop(0)
-                if data.get('type') == 'message' and \
-                   not data.get('bot_id') and \
-                   data.get('text'):
-
+                is_message = True if data.get('type') == 'message' else False
+                is_bot = True if data.get('bot_id') else False
+                if is_message and not is_bot and data.get('text'):
                     msg_text = data.get('text')
-                    if data.get('channel').startswith('D') or \
-                       re_botid.search(msg_text):
+                    if data.get('channel').startswith('D') or re_botid.search(msg_text):
                         dict_cmd = handle_message(msg=data)
-                        commands.append(
-                            SlackCommand(logger=self.logger, **dict_cmd))
+                        commands.append(SlackCommand(logger=self.logger, **dict_cmd))
                     elif ECHO_COMMAND and not data.get('thread_ts') and \
                             data.get('subtype', 'none') in ECHO_SUBTYPE:
                         dict_cmd = handle_message(msg=data)
                         dict_cmd['command'] = 'echo'
-                        commands.append(
-                            SlackCommand(logger=self.logger, **dict_cmd))
+                        commands.append(SlackCommand(logger=self.logger, **dict_cmd))
             except IndexError:
                 break
 
