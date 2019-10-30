@@ -3,7 +3,7 @@
 import re
 from socket import error as SocketError
 from slackclient import SlackClient
-from websocket._exceptions import WebSocketConnectionClosedException as WSocketError
+from websocket._exceptions import WebSocketConnectionClosedException
 
 from slackbot.slack import TOKEN
 from slackbot.slack.methods import get_message
@@ -50,7 +50,7 @@ class RTMSlackBot(SlackBot):
         """
         try:
             data = self._client.rtm_read()
-        except (WSocketError, SocketError) as e:
+        except (WebSocketConnectionClosedException, SocketError) as e:
             raise RTMConnectionLost("Conexão com slack perdida: {}".format(e))
         return data
 

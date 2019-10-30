@@ -43,8 +43,8 @@ class SlackCommand(SlackBot):
         Busca a mensagem acima à mensagem de solicitação do bot.
         """
         replies = get_message(self.channel, self.thread_ts).get('replies')
-        quantity = len(replies)
         '''
+        quantity = len(replies)
         for x in range(quantity):
             pointed = replies[x].get('ts')
             message = get_message(channel=self.channel, ts=pointed) 
@@ -129,7 +129,7 @@ def handle_exceptions(f):
             self.send(
                 text="\n".join([
                     "Ops, alguma coisa errada não está certa! :bomb:",
-                    "`Impossivel processar o comando`"
+                    "`Impossivel processar o comando.`"
                 ])
             )
     return wrapper
