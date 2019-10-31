@@ -93,7 +93,7 @@ class RTMSlackBot(SlackBot):
 
         def handle_message(msg):
             text = msg.get('text')
-            try:                
+            try:
                 cmdline = text.split(at_bot)[1].strip().split('\n')[0] # Comando                
                 cmd_text = "\n".join(text.split(at_bot)[1].split('\n')[1:]) # Abaixo do comando
             except IndexError:
@@ -134,6 +134,7 @@ class RTMSlackBot(SlackBot):
         while True:
             try:
                 data = datalist.pop(0)
+                # full_message = data.get('message').get('text')                
                 is_message = True if data.get('type') == 'message' else False
                 is_bot = True if data.get('bot_id') else False
                 if is_message and not is_bot and data.get('text'):

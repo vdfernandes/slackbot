@@ -14,7 +14,7 @@ from slackbot.slack.exception import RTMConnectionLost
 
 # Importer dos comandos de processamento
 from slackbot.commands.register import Register
-from slackbot.commands import NotFound
+from slackbot.commands.handlers import HandleCommand
 
 # Logging
 READ_DELAY = getenv('DEFAULT_READ_DELAY')
@@ -22,7 +22,7 @@ RETRY_DELAY = getenv('DEFAULT_RETRY_DELAY')
 LOGLEVEL = getenv('DEFAULT_LOGLEVEL')
 
 # Comandos aceitos
-d_commands = {
+known_commands = {
     'register': Register
 }
 
@@ -54,7 +54,10 @@ class BotDeamon(Daemon):
         Processamento dos comandos enviados
         """
         self.logger.debug("Command: {}".format(cmd.command))
-        cmd.__class__ = d_commands.get(cmd.command.lower(), NotFound)
+        cmd.__class__ = known_commands.get(
+            cmd.command.lower(),
+            HandleCommand
+        )
         threading.Thread(target=cmd.run).start()
         self.logger.debug("Thread initiated.")
 

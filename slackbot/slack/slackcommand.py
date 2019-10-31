@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import argparse
-from ..slack.slackbot import SlackBot
-from ..slack.exception import CommandNotImplemented, PlannedException
+from slackbot.slack.slackbot import SlackBot
+from slackbot.slack.exception import CommandNotImplemented, PlannedException
 from slackbot.slack.methods import for_humans_text, get_message
-from ..jira.exception import (
+from slackbot.jira.exception import (
     JIRAError,
     CreateIssueError,
     JIRAUserNotFound,
@@ -56,11 +56,19 @@ class SlackCommand(SlackBot):
         return get_message(channel=self.channel, ts=ts_pointed)      
 
     def __str__(self):
-        s = "Channel: {}, TS: {}, From: {}, Command: {}".format(
-            self.msg_channel, self.msg_ts, self.msg_from, self.command)
+        s = "Channel: {}, TS: {}, From: {}, Command: {}, Text: {}".format(
+            self.msg_channel,
+            self.msg_ts,
+            self.msg_from,
+            self.command,
+            self.msg_text
+        )
         if self.mthread_ts:
             s = "{}, TS: {}, Thread From: {}".format(
-                s, self.mthread_ts, self.mthread_from)
+                s,
+                self.mthread_ts,
+                self.mthread_from
+            )
         return s
 
     def __repr__(self):
@@ -68,7 +76,7 @@ class SlackCommand(SlackBot):
 
     def run(self):
         raise CommandNotImplemented(
-            "run needs to be implemented by {}".format(self)
+            "This method (run) needs to be implemented by {}".format(self)
         )
 
 

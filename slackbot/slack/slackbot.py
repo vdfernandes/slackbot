@@ -133,9 +133,15 @@ class SlackBot(object):
                     'Erro ao iniciar thread',
                     'Response retornou ok != True: {0}'.format(response)
                 )
-        except:
+        except Exception as e:
             if not self._send_error:
-                self.logger.warning("Erro ao requisitar a api chat.PostMessage. Adicionando a mensagem na fila de exceções")
+                self.logger.warning(
+                    "\r\n".join([
+                        "Erro ao requisitar a api chat.PostMessage.",
+                        "Adicionando a mensagem na fila de exceções.",
+                        "Exception: {}".format(e)
+                    ])
+                )
                 self._add_except()
             else:
                 raise
