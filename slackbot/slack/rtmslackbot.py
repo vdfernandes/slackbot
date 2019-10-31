@@ -13,6 +13,7 @@ from slackbot.slack.exception import RTMNotConnect, RTMConnectionLost
 from slackbot.utils import getenv
 
 # Variáveis de ambiente
+SLACK_CHANNEL = getenv('SLACK_CHANNEL')
 ECHO_COMMAND = getenv('RTM_STATUS')
 ECHO_SUBTYPE = ['file_share', 'file_comment', 'none']
 
@@ -137,13 +138,9 @@ class RTMSlackBot(SlackBot):
                 is_bot = True if data.get('bot_id') else False
                 if is_message and not is_bot and data.get('text'):
                     msg_text = data.get('text')
-                    if data.get('channel').startswith('D') or re_botid.search(msg_text):
+                    # if data.get('channel').startswith('D') or re_botid.search(msg_text):
+                    if data.get('channel') == SLACK_CHANNEL:
                         dict_cmd = handle_message(msg=data)
-                        commands.append(SlackCommand(logger=self.logger, **dict_cmd))
-                    elif ECHO_COMMAND and not data.get('thread_ts') and \
-                            data.get('subtype', 'none') in ECHO_SUBTYPE:
-                        dict_cmd = handle_message(msg=data)
-                        dict_cmd['command'] = 'echo'
                         commands.append(SlackCommand(logger=self.logger, **dict_cmd))
             except IndexError:
                 break

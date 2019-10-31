@@ -13,15 +13,8 @@ from slackbot.slack.rtmslackbot import RTMSlackBot
 from slackbot.slack.exception import RTMConnectionLost
 
 # Importer dos comandos de processamento
-from slackbot.commands import (
-    open as open_card,
-    close as close_card,
-    comment as comment_card, 
-    configchannel,
-    echo,
-    up,
-    NotFound
-)
+from slackbot.commands.register import Register
+from slackbot.commands import NotFound
 
 # Logging
 READ_DELAY = getenv('DEFAULT_READ_DELAY')
@@ -30,32 +23,40 @@ LOGLEVEL = getenv('DEFAULT_LOGLEVEL')
 
 # Comandos aceitos
 d_commands = {
-    'open': open_card.Open,
-    'close': close_card.Close,
-    'comment': comment_card.Comment,
-    'config-channel': configchannel.ConfigChannel,
-    'echo': echo.Echo,
-    'up': up.UP
+    'register': Register
 }
 
 class BotDeamon(Daemon):
     """ 
     Class to daemonize bot
     """
-    def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null',
-                 stderr='/dev/null', logger=None):
-
-        Daemon.__init__(self, pidfile, stdin=stdin, stdout=stdout,
-                        stderr=stderr, logger=logger)
+    def __init__(
+        self,
+        pidfile,
+        stdin='/dev/null',
+        stdout='/dev/null',
+        stderr='/dev/null',
+        logger=None
+    ):
+        """
+        Inicializador do Deamon
+        """
+        Daemon.__init__(
+            self, pidfile,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            logger=logger
+        )
 
     def _handle_commands(self, cmd):
         """
         Processamento dos comandos enviados
         """
-        self.logger.debug("command: {}".format(cmd.command))
+        self.logger.debug("Command: {}".format(cmd.command))
         cmd.__class__ = d_commands.get(cmd.command.lower(), NotFound)
         threading.Thread(target=cmd.run).start()
-        self.logger.debug("thread initiated")
+        self.logger.debug("Thread initiated.")
 
     def run(self):
         """
@@ -82,15 +83,19 @@ class BotDeamon(Daemon):
                     self._handle_commands(cmd)
                 time.sleep(int(READ_DELAY))
             except RTMConnectionLost:
-                self.logger.error("Connection with Slack lost")
-                self.logger.info("Re-connecting to Slack RTM API")
+                self.logger.error("Connection with Slack lost.")
+                self.logger.info("Re-connecting to Slack RTM API...")
                 connect()
-                self.logger.info("Reconnected")
+                self.logger.info("Reconnected!")
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 self.logger.error("---\r\nException: {}\r\nType: {}\r\nFile: {}\r\nLine: {}\r\n".format(
-                    e, exc_type, fname, exc_tb.tb_lineno))
+                    e,
+                    exc_type,
+                    fname,
+                    exc_tb.tb_lineno
+                ))
 
 
 def start_logging(level):

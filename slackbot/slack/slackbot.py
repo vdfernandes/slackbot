@@ -4,8 +4,8 @@ import time
 import logging
 from copy import copy
 
-from ..slack import BOT_ID
-from ..slack.methods import chat_post_message
+from slackbot.slack import BOT_ID
+from slackbot.slack.methods import chat_post_message
 
 
 class SlackBot(object):
